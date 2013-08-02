@@ -5,20 +5,27 @@ import android.app.Activity;
 import android.view.Menu;
 
 import android.opengl.GLSurfaceView;
-import javax.microedition.khronos.egl.EGLConfig;
-import javax.microedition.khronos.opengles.GL10;
+import importer.*;
 
 public class MainActivity extends Activity {
 	private GLSurfaceView myGLSurfaceView;
 	private ObjRender myRender;
+	private Scene myScene;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		myRender = new ObjRender();
+		myRender = new ObjRender(myScene);
 		myGLSurfaceView = (GLSurfaceView)findViewById(R.id.MainSurfaceView);
 		myGLSurfaceView.setRenderer(myRender);
+		
+		Importer importer = new ObjImporter();
+		importer.importFile(this.getResources().getAssets(), "banana.obj");
+		
+		myScene = new Scene();
+		myScene.update(importer);
+		
 	}
 
 	@Override
@@ -28,26 +35,4 @@ public class MainActivity extends Activity {
 		return true;
 	}
 
-}
-
-class ObjRender implements GLSurfaceView.Renderer
-{
-	public ObjRender()
-	{
-	}
-	
-	@Override
-	public void onDrawFrame(GL10 gl)
-	{
-	}
-	
-	@Override
-	public void onSurfaceChanged(GL10 gl, int width, int height)
-	{
-	}
-	
-	@Override
-	public void onSurfaceCreated(GL10 gl, EGLConfig config) 
-	{
-	}
 }
