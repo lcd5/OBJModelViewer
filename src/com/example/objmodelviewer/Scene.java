@@ -13,6 +13,7 @@ public class Scene
 	void update(Importer importer)
 	{
 		Vector<ModelData> models = importer.getModels();
+		myMeshNodes = new Vector<MeshNode>();
 		
 		for(int i=0; i< models.size(); i++)
 		{
@@ -22,6 +23,9 @@ public class Scene
 			
 			node.setVertexBuffer( models.get(i).getVertices() );
 			node.setIndexBuffer( models.get(i).getFaceIndices() );
+			node.setUVBuffer(models.get(i).getUVs(), models.get(i).getUVIndices());
+			node.setNormalBuffer(models.get(i).getNormals(), models.get(i).getNormalIndices());
+			
 			myMeshNodes.add(node);
 		}
 		

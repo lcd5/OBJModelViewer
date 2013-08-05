@@ -44,7 +44,7 @@ public class ModelData
 		return myUVIndices;
 	}
 	
-	public Vector<Short> normalIndices()
+	public Vector<Short> getNormalIndices()
 	{
 		return myNormalIndices;
 	}

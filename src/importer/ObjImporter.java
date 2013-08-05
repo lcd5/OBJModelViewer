@@ -12,6 +12,11 @@ public class ObjImporter implements Importer
 {
 	Vector<ModelData> myModels = new Vector<ModelData>();
 	Vector<Material> myMaterials=new Vector<Material>();
+	AssetManager myAssetManager;
+	
+	Vector<Float> myVertices=new Vector<Float>();
+	Vector<Float> myNormals=new Vector<Float>();
+	Vector<Float> myUVs=new Vector<Float>();
 	
 	@Override
 	public Vector<ModelData> getModels()
@@ -36,6 +41,7 @@ public class ObjImporter implements Importer
 	{
 		try
 		{
+			myAssetManager = manager;
 			importStream( manager.open(fileName) );
 		}
 		catch(IOException e){
@@ -68,12 +74,12 @@ public class ObjImporter implements Importer
 			{
 				lineBuffer.trim();
 				
-				if(lineBuffer.startsWith("v"))
-					parserVertexLine(lineBuffer);
-				else if(lineBuffer.startsWith("vn"))
+				if(lineBuffer.startsWith("vn"))
 					parserNormalLine(lineBuffer);
 				else if(lineBuffer.startsWith("vt"))
 					parserUVLine(lineBuffer);
+				else if(lineBuffer.startsWith("v"))
+					parserVertexLine(lineBuffer);
 				else if(lineBuffer.startsWith("f"))
 					parserFLine(lineBuffer);
 				else if(lineBuffer.startsWith("usemtl"))
@@ -84,6 +90,13 @@ public class ObjImporter implements Importer
 		}
 		catch(IOException e){
 		}
+		
+		for(int i=0; i<myModels.size(); i++)
+		{
+			myModels.get(i).myVertices = myVertices;
+			myModels.get(i).myNormals = myNormals;
+			myModels.get(i).myUVs = myUVs;
+		}
 	}
 	
 	private ModelData getCurrentModel()
@@ -91,7 +104,7 @@ public class ObjImporter implements Importer
 		if( myModels.size()== 0 )
 			myModels.add( new ModelData() );
 			
-		return myModels.firstElement();	
+		return myModels.lastElement();	
 	}
 	private void parserFLine(String buffer)
 	{
@@ -100,7 +113,7 @@ public class ObjImporter implements Importer
 		
 		// Only support one triangle per face
 		//
-		if(len != 4)
+		if(len < 4)
 			return;
 		
 		ModelData currentModel = getCurrentModel();
@@ -109,7 +122,7 @@ public class ObjImporter implements Importer
 		//
 		if( token[1].matches("[0-9]+"))
 		{
-			for(int i=0; i<len; i++)
+			for(int i=1; i<len; i++)
 			{
 				Short index = Short.valueOf(token[i]);
 				index--;
@@ -120,9 +133,9 @@ public class ObjImporter implements Importer
 		//
 		else if(token[1].matches("[0-9]+/[0-9]+"))
 		{
-			for(int i=0; i<len; i++)
+			for(int i=1; i<len; i++)
 			{
-				String []vUV = buffer.split("/");
+				String []vUV = token[i].split("/");
 				
 				Short vIndex = Short.valueOf(vUV[0]);
 				vIndex--;
@@ -137,33 +150,39 @@ public class ObjImporter implements Importer
 		//
 		else if(token[1].matches("[0-9]+//[0-9]+"))
 		{
-			String []vn = buffer.split("//");
+			for(int i=1; i<len; i++)
+			{
+				String []vn = token[i].split("//");
 			
-			Short vIndex = Short.valueOf(vn[0]);
-			vIndex--;
-			currentModel.myFaceIndices.add(vIndex);
+				Short vIndex = Short.valueOf(vn[0]);
+				vIndex--;
+				currentModel.myFaceIndices.add(vIndex);
 			
-			Short nIndex = Short.valueOf(vn[1]);
-			nIndex--;
-			currentModel.myNormalIndices.add(nIndex);
+				Short nIndex = Short.valueOf(vn[1]);
+				nIndex--;
+				currentModel.myNormalIndices.add(nIndex);
+			}
 		}
 		// case f: v/vt/vn
 		//
 		else if(token[1].matches("[0-9]+/[0-9]+/[0-9]+"))
 		{
-			String []vUVn = buffer.split("/");
+			for(int i=1; i<len; i++)
+			{
+				String []vUVn = token[i].split("/");
 			
-			Short vIndex = Short.valueOf(vUVn[0]);
-			vIndex--;
-			currentModel.myFaceIndices.add(vIndex);
+				Short vIndex = Short.valueOf(vUVn[0]);
+				vIndex--;
+				currentModel.myFaceIndices.add(vIndex);
 			
-			Short uvIndex = Short.valueOf(vUVn[1]);
-			uvIndex--;
-			currentModel.myUVIndices.add(uvIndex);
+				Short uvIndex = Short.valueOf(vUVn[1]);
+				uvIndex--;
+				currentModel.myUVIndices.add(uvIndex);
 			
-			Short nIndex = Short.valueOf(vUVn[2]);
-			nIndex--;
-			currentModel.myNormalIndices.add(nIndex);
+				Short nIndex = Short.valueOf(vUVn[2]);
+				nIndex--;
+				currentModel.myNormalIndices.add(nIndex);
+			}
 		}
 	}
 	
@@ -173,7 +192,7 @@ public class ObjImporter implements Importer
 		int len=tokens.length; 
 		for(int i=1; i<len; i++)
 		{ 
-			getCurrentModel().myVertices.add(Float.valueOf(tokens[i]));
+			myVertices.add(Float.valueOf(tokens[i]));
 		}
 	}
 	
@@ -183,7 +202,7 @@ public class ObjImporter implements Importer
 		int len=tokens.length; 
 		for(int i=1; i<len; i++)
 		{ 
-			getCurrentModel().myNormals.add(Float.valueOf(tokens[i]));
+			myNormals.add(Float.valueOf(tokens[i]));
 		}
 	}
 	
@@ -193,7 +212,7 @@ public class ObjImporter implements Importer
 		int len=tokens.length; 
 		for(int i=1; i<len; i++)
 		{ 
-			getCurrentModel().myUVs.add(Float.valueOf(tokens[i]));
+			myUVs.add(Float.valueOf(tokens[i]));
 		}
 	}
 	
@@ -212,7 +231,7 @@ public class ObjImporter implements Importer
 		
 		try 
 		{ 
-			reader = new BufferedReader(new InputStreamReader(new FileInputStream(mtlFileName)));
+			reader = new BufferedReader(new InputStreamReader(myAssetManager.open(mtlFileName)));
 		} 		
 		catch(IOException e){
 		}
@@ -289,6 +308,9 @@ public class ObjImporter implements Importer
 						currentMtl.mySpecularTextureFile = str[str.length-1];
 					}
 				}
+				
+				if(currentMtl != null)
+					myMaterials.add(currentMtl);
 			}
 			catch(IOException e){
 			}

@@ -1,5 +1,9 @@
 package importer;
 
+import java.nio.FloatBuffer;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+
 public class Material 
 {
 	String myName;
@@ -66,6 +70,18 @@ public class Material
 
 	public String getAmbinetTextureFile() {
 		return myAmbientTextureFile;
+	}
+	
+	public FloatBuffer getAmbientColorBuffer()
+	{
+		FloatBuffer fBuf;
+		ByteBuffer bBuf = ByteBuffer.allocateDirect(12);
+		bBuf.order(ByteOrder.nativeOrder());
+		fBuf = bBuf.asFloatBuffer();
+		fBuf.put(myAmbientColor);
+		fBuf.position(0);
+		
+		return fBuf;
 	}
 }
 
